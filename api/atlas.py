@@ -1,7 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
 import requests
-import json
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -11,18 +10,20 @@ class handler(BaseHTTPRequestHandler):
         dictionary = dict(query_string_list)
 
         if "country" in dictionary:
-            url = f"https://restcountries.com/v3.1/name/{dictionary['country']}"
+            country_name = dictionary["country"]
+            url = f"https://restcountries.com/v3.1/name/{country_name}"
             r = requests.get(url)
             
             if r.status_code == 200:
                 data = r.json()
-                capitals = [country_data['capital'][0] if 'capital' in country_data else "No Capital" for country_data in data]
+                capital = data[0]['capital'][0] if 'capital' in data[0] else "Unknown"
+                message = f"The capital of {country_name} is {capital}."
                 self.send_response(200)
                 self.send_header('Content-type', 'text/plain')
                 self.end_headers()
-                self.wfile.write(json.dumps({'capitals': capitals}).encode())
+                self.wfile.write(message.encode())
             else:
-                self.send_error(404, "Country not found")
+                self.send_error(404, f"Country '{country_name}' not found")
         else:
             self.send_error(400, "Bad Request: Missing 'country' parameter")
 
